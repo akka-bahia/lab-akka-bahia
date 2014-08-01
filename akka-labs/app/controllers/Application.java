@@ -6,11 +6,14 @@ import actors.s3aws.S3FileObject;
 //import actors.s3aws.S3Helper;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import play.Play;
+import play.cache.Cache;
 import play.libs.Akka;
 import play.mvc.*;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Objects;
 
 import actors.mail.EmailNotificacaoMessage;
 import actors.mail.EmailOperacionalMessage;
@@ -79,8 +82,8 @@ public class Application extends Controller {
     //%%%%%%%%%%%%%%%%%%%%
     public static Result s3() {
 
-        String paramNomeArquivoFoto = "01010101-BRASILEIRA.png";
-        File fileTemp = new File("C:\\BRASILEIRA.png");
+        String paramNomeArquivoFoto = "111-Z800-2.jpg";
+        File fileTemp = new File("C:\\Z800-2.jpg");
 
         S3FileObject s3FileObject = new S3FileObject(ConstantUtil.BUCKET_NAME, ConstantUtil.DIRETORIO_FOTOS, paramNomeArquivoFoto, fileTemp);
 
@@ -91,5 +94,24 @@ public class Application extends Controller {
         storageService.putObjectS3(s3FileObject);
 
         return ok("Application - S3 - PUT: " + " - " + new Date());
+    }
+
+
+    public static Result setCache(String keyObject){
+
+        String key = "101";
+        String object = keyObject; //"A-1-A-1-A-1";
+        int duration = 30;
+
+        Cache.set(key, object, duration);
+
+        return ok("setCache: " + new Date());
+    }
+
+    public static Result getCache(String key){
+
+        String objRetrive = (String) Cache.get("101");
+
+        return ok("objRetrive: " + objRetrive);
     }
 }

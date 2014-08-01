@@ -9,5 +9,8 @@ GET     /blank                      controllers.Application.blank()
 GET     /ses/:to                    @controllers.Application.ses(to: String)
 GET     /s3                         controllers.Application.s3()
 
+POST    /cache/:keyObj              controllers.Application.setCache(keyObj: String)
+GET     /cache/:key                 controllers.Application.getCache(key: String)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
