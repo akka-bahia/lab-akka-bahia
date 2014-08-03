@@ -1,39 +1,18 @@
 package actors.s3aws;
 
-import actors.s3aws.S3FileObject;
-
 import akka.actor.UntypedActor;
-
-import java.io.IOException;
-import java.util.Collection;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.PropertiesCredentials;
-import com.amazonaws.auth.AWSCredentials;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
 
-import java.util.Collection;
-
-import actors.s3aws.S3FileObject;
-//import actors.s3aws.S3FileCollectionMessage;
-
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import utils.ToolsUtil;
 
-import java.io.File;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Created by w6c on 27/07/2014.
@@ -46,37 +25,33 @@ public class S3AWSWorker extends UntypedActor{
     @Override
     public void onReceive(Object message) throws Exception {
 
-        System.out.println("S3AWSWorker - onReceive");
-
         if(message instanceof S3FileObject){
-
             try{
-                final Config config = ConfigFactory.load();
-
-                System.out.println("S3AWSWorker - PRE TransferManager");
-
+                //Criar TransferManager recebendo cliente autenticado com AWS Credentials
                 tm =  new TransferManager(ToolsUtil.awsCredentials);
 
-                System.out.println("S3AWSWorker - POS TransferManager");
-
+                //Mensagem do ator na verdade é POJO com info do Objecto S3
                 final S3FileObject s3FileObject = (S3FileObject) message;
 
+                //NOME do ARQUIVO no bucket S3
                 String nameObjectInBucket = s3FileObject.getBucketPath() + s3FileObject.getKeyFileName();
 
+                //CRIA arquivo PutObjectRequest e INCIA transferencia
                 Upload upload = tm.upload(new PutObjectRequest(s3FileObject.getBucketName(),
                         nameObjectInBucket, s3FileObject.getFile()));
 
+                //Força aguardar a transfencia concluir
                 upload.waitForCompletion();
 
+                //Transferencia Executada com sucesso
                 if(upload.isDone()){
-                    System.out.println("S3AWSWorker - isDone:");
+                    System.out.println("$$$$$$$$$$ S3AWSWorker - isDone [" + new Date() + "] $$$$$$$$$$");
+
+                    //#CLEAN-RESOURCE: Apaga arquivo da pasta temporaria do sistema de arquivo
+                    s3FileObject.getFile().delete();
                 }
 
-                System.out.println("S3AWSWorker - OK: " + new Date());
-
             } catch (AmazonServiceException ase) {
-
-                //retorno = false;
 
                 System.out.println("Caught an AmazonServiceException, which "
                         + "means your request made it "
@@ -91,8 +66,6 @@ public class S3AWSWorker extends UntypedActor{
 
             } catch (AmazonClientException ace) {
 
-                //retorno = false;
-
                 System.out.println("Caught an AmazonClientException, which "
                         + "means the client encountered "
                         + "an internal error while trying to "
@@ -103,16 +76,12 @@ public class S3AWSWorker extends UntypedActor{
 
                 ex.printStackTrace();
             }finally {
-                System.out.println("S3AWSWorker - finally");
 
+                //#CLEAN-RESOURCE: Desalocando o AWS TransferManager
                 if(tm != null){
                     tm.shutdownNow();
-
-                    System.out.println("S3AWSWorker - finally - shutdownNow");
                 }
             }
-
-            //System.out.println("S3AWSWorker - upload.getProgress().getPercentTransferred: " + upload.getProgress().getPercentTransferred());
 
         }else{
             System.out.println("**** S3AWSWorker - unhandled ****");

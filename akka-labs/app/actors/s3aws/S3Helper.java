@@ -18,6 +18,7 @@ import utils.ToolsUtil;
 
 public class S3Helper {
 
+/*
 
     public static void putS3(S3FileObject message){
 
@@ -59,10 +60,10 @@ public class S3Helper {
                 Upload upload = tm.upload(new PutObjectRequest(s3FileObject.getBucketName(),
                         nameObjectInBucket, s3FileObject.getFile()));
 
-                System.out.println("upload.getDescription: " + upload.getDescription());
+                System.out.println("uploadFoto.getDescription: " + upload.getDescription());
 
                 if(upload.isDone()){
-                    System.out.println("S3Helper - upload.isDone");
+                    System.out.println("S3Helper - uploadFoto.isDone");
 
                     tm.shutdownNow();
                 }
@@ -98,10 +99,11 @@ public class S3Helper {
             }
 
 
-            //System.out.println("S3AWSWorker - upload.getProgress().getPercentTransferred: " + upload.getProgress().getPercentTransferred());
+            //System.out.println("S3AWSWorker - uploadFoto.getProgress().getPercentTransferred: " + uploadFoto.getProgress().getPercentTransferred());
         }
 
         System.out.println("S3Helper - putS3 - AFTER");
     }
 
+*/
 }

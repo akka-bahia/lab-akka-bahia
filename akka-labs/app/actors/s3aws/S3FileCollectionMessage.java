@@ -7,9 +7,4 @@ import java.util.Collection;
  */
 public class S3FileCollectionMessage {
 
-    public final Collection<S3FileObject> s3FileObjectCollection;
-
-    public S3FileCollectionMessage(Collection<S3FileObject> s3FileObjectCollection) {
-        this.s3FileObjectCollection = s3FileObjectCollection;
-    }
 }

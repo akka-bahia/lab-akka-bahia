@@ -7,16 +7,14 @@ GET         /                           controllers.Application.index()
 GET         /blank                      controllers.Application.blank()
 
 GET         /ses/:to                    @controllers.Application.ses(to: String)
-GET         /s3                         controllers.Application.s3()
+GET         /s3/:cpf                    controllers.Application.s3(cpf: String)
 
-POST        /cache/:keyObj              controllers.Application.setCache(keyObj: String)
 GET         /cache/:key                 controllers.Application.getCache(key: String)
 
-POST        /upload-old                 controllers.Application.setFileUp()
-POST        /upload                     controllers.Application.upload()
+POST        /upload/:cpf                controllers.Application.uploadFoto(cpf: String)
 
 OPTIONS     /upload      				controllers.Application.option()
-#OPTIONS    /contact/:id  				controllers.ContactController.optionID(id: Long)
+OPTIONS    /upload/:id  				controllers.Application.optionID(id: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

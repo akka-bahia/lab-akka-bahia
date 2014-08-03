@@ -9,9 +9,11 @@ import akka.actor.Props;
 import play.Play;
 import play.cache.Cache;
 import play.libs.Akka;
+import play.libs.Json;
 import play.mvc.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
 
@@ -21,9 +23,11 @@ import actors.mail.EmailOperacionalMessage;
 import services.MailServiceHelper;
 import services.StorageServiceHelper;
 import utils.ConstantUtil;
+import utils.ToolsUtil;
 import views.html.*;
 
 public class Application extends Controller {
+
     // ########################################################################################################
     // ############################################## ENABLE CORS #############################################
 
@@ -99,79 +103,71 @@ public class Application extends Controller {
     }
 
     //%%%%%%%%%%%%%%%%%%%%
-    public static Result s3() {
+    public static Result s3(String nomeFileFotoCache) {
 
-        String paramNomeArquivoFoto = "111-Z800-2.jpg";
-        File fileTemp = new File("C:\\Z800-2.jpg");
+        //String paramNomeArquivoFoto = "111-Z800-2.jpg";
+        //File fileTemp = new File("C:\\Z800-2.jpg");
 
-        S3FileObject s3FileObject = new S3FileObject(ConstantUtil.BUCKET_NAME, ConstantUtil.DIRETORIO_FOTOS, paramNomeArquivoFoto, fileTemp);
+        //S3FileObject s3FileObject = new S3FileObject(ConstantUtil.BUCKET_NAME, ConstantUtil.DIRETORIO_FOTOS, paramNomeArquivoFoto, fileTemp);
 
         //ActorRef actorRefSupervisor = Akka.system().actorOf(Props.create(S3AWSSupervisor.class));
         //actorRefSupervisor.tell(s3FileObject, ActorRef.noSender());
         //S3Helper.putS3(s3FileObject);
+
         StorageServiceHelper storageService = new StorageServiceHelper();
-        storageService.putObjectS3(s3FileObject);
+        //storageService.putObjectS3(s3FileObject);
+
+        storageService.salvarFotoStorage(nomeFileFotoCache);
 
         return ok("Application - S3 - PUT: " + " - " + new Date());
     }
 
-
-    public static Result setCache(String keyObject){
-
-        String key = "101";
-        String object = keyObject; //"A-1-A-1-A-1";
-        int duration = 30;
-
-        Cache.set(key, object, duration);
-
-        return ok("setCache: " + new Date());
-    }
-
     public static Result getCache(String key){
 
-        String objRetrive = (String) Cache.get("101");
+        File objRetrive = (File) Cache.get(key);
 
-        return ok("objRetrive: " + objRetrive);
-    }
+        if(objRetrive != null){
 
-    public static Result setFileUp(){
+            System.out.println("<<<<<<<< getCache -  fileName: " + objRetrive.getName());
+            System.out.println("<<<<<<<< getCache -  getPath: " + objRetrive.getPath());
+            System.out.println("<<<<<<<< getCache -  canRead: " + objRetrive.canRead());
+            System.out.println("<<<<<<<< getCache -  objRetrive.length: " + objRetrive.length());
 
-        File file = request().body().asRaw().asFile();
+            return ok("objRetrive.Name: " + objRetrive.getName() + " | " + "objRetrive.getParent: " + objRetrive.getParent() + " | objRetrive.length: "+ objRetrive.length());
 
-        if(file != null){
-            return ok(":: setFileUp :::");
         }else{
-            return badRequest("File NULL");
+            return notFound("OBJ [" + key + "] NOT FOUND!!");
         }
     }
 
-    public static Result upload() {
-        response().setHeader("Access-Control-Allow-Origin", "*");
-        response().setHeader("Access-Control-Allow-Headers","X-Requested-With");
-
-        String NM_FILE = "myFile";
+    /**
+     * 1 - Get File of MultiPart Body
+     * 2 - Formart name of file to Persiste in S3
+     * 3 - Save Nama Format and File in ehCache
+     * @param cpf and File in MultiPart
+     * @return nomeFileFotoCache asJson - Nome do arquivo com CPF e extensao. Nome Pronto p/ S3
+     *
+     */
+    public static Result uploadFoto(String cpf) {
         Http.MultipartFormData body = request().body().asMultipartFormData();
-        Http.MultipartFormData.FilePart picture = body.getFile(NM_FILE);
-
-        System.out.println();
+        Http.MultipartFormData.FilePart picture = body.getFile(ConstantUtil.KEY_MULTIPARTI_FILE_UPLOAD_FOTO);
 
         if (picture != null) {
-            System.out.println("<<<<<<<< upload -  picture != null  >>>>>>>>>>>>>");
+            String extensao =  ToolsUtil.capturaExtensaoDoMimeType(picture.getContentType());
+            String nomeFileFotoCache = ConstantUtil.PREFIX_FOTO + cpf + "." + extensao;
+            //File file = picture.getFile();
+            Cache.set(nomeFileFotoCache, picture.getFile());
 
-            String fileName = picture.getFilename();
             String contentType = picture.getContentType();
-            File file = picture.getFile();
+            System.out.println("<<<<<<<< uploadFoto -  contentType: " + contentType);
 
-
-            System.out.println("<<<<<<<< upload -  fileName: " + fileName);
-            System.out.println("<<<<<<<< upload -  contentType: " + contentType);
-            System.out.println("<<<<<<<< upload -  file.length: " + file.length());
+            System.out.println("<<<<<<<< capturaExtensaoDoMimeType: " + extensao);
 
             //return ok(file).as("image/jpeg");
-            return ok(file).as("fileName: " + fileName + " | " + "contentType: " + contentType + " | file.length: "+ file.length());
+            return ok(Json.toJson(Json.newObject().put("nomeFileFotoCache", nomeFileFotoCache)));
 
         } else {
-            System.out.println("<<<<<<<< upload - ELSE  >>>>>>>>>>>>>");
+            System.out.println("<<<<<<<< uploadFoto - ELSE  >>>>>>>>>>>>>");
 
             flash("error", "Missing file");
             return redirect(controllers.routes.Application.index());

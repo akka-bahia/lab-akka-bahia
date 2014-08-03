@@ -7,7 +7,6 @@ import scala.concurrent.duration.Duration;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 
-//import static akka.actor.SupervisorStrategy.*;
 import static akka.actor.SupervisorStrategy.escalate;
 import static akka.actor.SupervisorStrategy.stop;
 import static akka.actor.SupervisorStrategy.restart;
@@ -19,6 +18,8 @@ import static akka.actor.SupervisorStrategy.Directive;
 
 public class S3AWSSupervisor extends UntypedActor{
 
+    //Criando Estrantegia de Recuperacao de Falhas
+    //NAO ESTA FUNCIONANDO POIS O FILHO(Woker) ESTA COM TRAMENTO DE EXCEÇOES
     SupervisorStrategy strategy = new OneForOneStrategy(5, Duration.create("30 seconds"), new Function<Throwable, SupervisorStrategy.Directive>(){
 
         @Override
@@ -39,15 +40,14 @@ public class S3AWSSupervisor extends UntypedActor{
         return strategy;
     }
 
-    //Props props = Props.create(S3AWSWorker.class);
+    //CRIANDO Worker
     ActorRef s3Worker = context().actorOf(Props.create(S3AWSWorker.class));
 
     @Override
     public void onReceive(Object message) throws Exception {
 
-        System.out.println("S3AWSSupervisor - onReceive");
-
         if(message instanceof S3FileObject){
+            //Enviando a mensagem
             s3Worker.forward(message, getContext());
         }else{
             System.out.println("***** S3AWSSupervisor - unhandled ****");
