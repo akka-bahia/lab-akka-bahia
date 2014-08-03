@@ -24,6 +24,25 @@ import utils.ConstantUtil;
 import views.html.*;
 
 public class Application extends Controller {
+    // ########################################################################################################
+    // ############################################## ENABLE CORS #############################################
+
+    private static Result allowCORS() {
+        response().setHeader("Access-Control-Allow-Origin", "*");
+        response().setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        response().setHeader("Access-Control-Max-Age", "300");
+        response().setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        return ok();
+    }
+
+    public static Result option() {
+        return allowCORS();
+    }
+
+    public static Result optionID(Long id) {
+        return allowCORS();
+    }
+    // ########################################################################################################
 
     public static Result index() {
 
@@ -113,5 +132,49 @@ public class Application extends Controller {
         String objRetrive = (String) Cache.get("101");
 
         return ok("objRetrive: " + objRetrive);
+    }
+
+    public static Result setFileUp(){
+
+        File file = request().body().asRaw().asFile();
+
+        if(file != null){
+            return ok(":: setFileUp :::");
+        }else{
+            return badRequest("File NULL");
+        }
+    }
+
+    public static Result upload() {
+        response().setHeader("Access-Control-Allow-Origin", "*");
+        response().setHeader("Access-Control-Allow-Headers","X-Requested-With");
+
+        String NM_FILE = "myFile";
+        Http.MultipartFormData body = request().body().asMultipartFormData();
+        Http.MultipartFormData.FilePart picture = body.getFile(NM_FILE);
+
+        System.out.println();
+
+        if (picture != null) {
+            System.out.println("<<<<<<<< upload -  picture != null  >>>>>>>>>>>>>");
+
+            String fileName = picture.getFilename();
+            String contentType = picture.getContentType();
+            File file = picture.getFile();
+
+
+            System.out.println("<<<<<<<< upload -  fileName: " + fileName);
+            System.out.println("<<<<<<<< upload -  contentType: " + contentType);
+            System.out.println("<<<<<<<< upload -  file.length: " + file.length());
+
+            //return ok(file).as("image/jpeg");
+            return ok(file).as("fileName: " + fileName + " | " + "contentType: " + contentType + " | file.length: "+ file.length());
+
+        } else {
+            System.out.println("<<<<<<<< upload - ELSE  >>>>>>>>>>>>>");
+
+            flash("error", "Missing file");
+            return redirect(controllers.routes.Application.index());
+        }
     }
 }
